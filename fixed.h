@@ -152,12 +152,12 @@ namespace cc0
 		/// @brief Addition.
 		/// @param r The right-hand side operator.
 		/// @return The result.
-		fixed &operator+=(int_t r) { value_bits += (r.value_bits << precision); return *this; }
+		fixed &operator+=(int_t r) { value_bits += (r << precision); return *this; }
 
 		/// @brief Subtraction.
 		/// @param r The right-hand side operator.
 		/// @return The result.
-		fixed &operator-=(int_t r) { value_bits -= (r.value_bits << precision); return *this; }
+		fixed &operator-=(int_t r) { value_bits -= (r << precision); return *this; }
 		
 		/// @brief Multiplication.
 		/// @param r The right-hand side operator.
@@ -168,6 +168,22 @@ namespace cc0
 		/// @param r The right-hand side operator.
 		/// @return The result.
 		fixed &operator/=(int_t r) { value_bits /= r; return *this; }
+
+		/// @brief Pre-increment.
+		/// @return A reference to the state of the variable after increment.
+		fixed &operator++( void ) { return *this += 1; }
+
+		/// @brief Post-increment.
+		/// @return The state of the variable before increment.
+		fixed operator++( int ) { auto t = *this; *this += 1; return t; }
+
+		/// @brief Pre-decrement.
+		/// @return A reference to the state of the variable after decrement.
+		fixed &operator--( void ) { return *this -= 1; }
+
+		/// @brief Post-decrement.
+		/// @return The state of the variable before decrement.
+		fixed operator--( int ) { auto t = *this; *this -= 1; return t; }
 	};
 }
 
@@ -177,14 +193,14 @@ cc0::fixed<bits,precision>::fixed(cc0::fixed<bits,precision>::int_t i, cc0::fixe
 	static constexpr typename cc0::fixed_internal::intinfo<bits>::uint_t MAX_FRAC        = (typename cc0::fixed_internal::intinfo<bits>::uint_t(1) << precision) - 1;
 	static const uint32_t                                                MAX_FRAC_LOG10  = cc0::fixed_internal::log10(MAX_FRAC) - 1;
 	static const uint32_t                                                MAX_FRAC_BASE10 = cc0::fixed_internal::exp(10, MAX_FRAC_LOG10) - 1;
-	static const cc0::fixed<bits,bits-precision-1>                       SCALE           = cc0::fixed<bits,bits-precision-1>(MAX_FRAC) / MAX_FRAC_BASE10;
+	static const cc0::fixed<bits,bits-precision-1>                       SCALE           = cc0::fixed<bits,bits-precision-1>(MAX_FRAC) / (MAX_FRAC_BASE10 + 1);
 	
 	if (d > 0) {
 		const uint32_t log10 = cc0::fixed_internal::log10(d);
-		if (log10 > MAX_FRAC_LOG10) {
-			d /= cc0::fixed_internal::exp(10, log10 - MAX_FRAC_LOG10);
+		if (log10 >= MAX_FRAC_LOG10) {
+			d /= cc0::fixed_internal::exp(10, log10 - MAX_FRAC_LOG10 + 1);
 		} else {
-			d *= cc0::fixed_internal::exp(10, MAX_FRAC_LOG10 - log10);
+			d *= cc0::fixed_internal::exp(10, MAX_FRAC_LOG10 - log10 - 1);
 		}
 		value_bits += typename cc0::fixed_internal::intinfo<bits>::int_t(d * SCALE);
 	}
